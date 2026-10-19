@@ -1,0 +1,1326 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#03101a">
+<title>SAMEGA TIDE</title>
+<style>
+  :root{
+    --fg:#eef8ff;
+    --panel:#062130;
+    --line:rgba(255,255,255,.12);
+    --accent:#38d2ff;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    height:100%;
+    margin:0;
+    background:linear-gradient(180deg,#072844,#020911 72%);
+    color:var(--fg);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,"Noto Sans JP","Noto Sans KR","Noto Sans SC",sans-serif;
+    overflow:hidden;
+    -webkit-tap-highlight-color:transparent;
+  }
+  #app{
+    width:min(100%,520px);
+    height:100vh;
+    height:100dvh;
+    margin:0 auto;
+    padding:8px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    user-select:none;
+    -webkit-user-select:none;
+  }
+  header{
+    flex:0 0 auto;
+    background:linear-gradient(180deg,rgba(8,48,74,.96),rgba(4,24,38,.94));
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px;
+    box-shadow:0 10px 30px rgba(0,0,0,.38);
+  }
+  .brand{
+    font-size:22px;
+    font-weight:900;
+    letter-spacing:.16em;
+    color:#fff;
+    text-shadow:0 0 14px rgba(56,210,255,.45);
+    white-space:nowrap;
+  }
+  .brand span{
+    color:#ff4d9b;
+    text-shadow:0 0 14px rgba(255,77,155,.45);
+  }
+  .tagline{
+    font-size:11px;
+    color:#98d7ff;
+    margin-top:3px;
+    min-height:14px;
+    overflow-wrap:anywhere;
+  }
+  .row{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:8px;
+  }
+  .btn{
+    flex:1;
+    min-width:92px;
+    padding:8px 6px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#103f5a;
+    color:#fff;
+    font-size:12px;
+    font-weight:800;
+    cursor:pointer;
+    touch-action:manipulation;
+  }
+  .btn.primary{
+    background:linear-gradient(135deg,#21a6d8,#0a5b8f);
+    border-color:rgba(255,255,255,.22);
+  }
+  .btn.danger{
+    background:#521525;
+  }
+  .selects{
+    align-items:flex-end;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    flex:1;
+    min-width:122px;
+  }
+  .lbl{
+    font-size:10px;
+    color:#98d7ff;
+    letter-spacing:.05em;
+  }
+  select{
+    width:100%;
+    padding:7px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:#0a2434;
+    color:#fff;
+    font-size:12px;
+  }
+  .stats{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    margin-top:8px;
+    padding:6px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:rgba(0,0,0,.25);
+    font-size:12px;
+  }
+  .stats strong{
+    font-size:16px;
+  }
+  #status{
+    margin-top:6px;
+    min-height:18px;
+    font-size:12px;
+    color:#b9f0ff;
+    white-space:pre-line;
+    overflow-wrap:anywhere;
+  }
+  #boardArea{
+    flex:1 1 auto;
+    min-height:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #board{
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(12,1fr);
+    gap:2px;
+    padding:4px;
+    background:rgba(0,0,0,.36);
+    border:1px solid var(--line);
+    border-radius:14px;
+    touch-action:manipulation;
+  }
+  .cell{
+    border-radius:6px;
+    background:transparent;
+  }
+  .cell.empty{
+    box-shadow:none;
+  }
+  .cell.c1,.cell.c2,.cell.c3,.cell.c4,.cell.c5{
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -4px 8px rgba(0,0,0,.18),0 1px 2px rgba(0,0,0,.34);
+  }
+  .cell.c1{background:linear-gradient(135deg,#ff8e9b,#b80040)}
+  .cell.c2{background:linear-gradient(135deg,#7ad3ff,#005f90)}
+  .cell.c3{background:linear-gradient(135deg,#98f3a6,#007a35)}
+  .cell.c4{background:linear-gradient(135deg,#ffe08a,#a06900)}
+  .cell.c5{background:linear-gradient(135deg,#d0b2ff,#5b1f9c)}
+  .cell.selected{
+    filter:brightness(1.45);
+    box-shadow:0 0 0 2px #fff,0 0 14px rgba(255,255,255,.75) !important;
+    z-index:1;
+  }
+  .cell.hover{
+    filter:brightness(1.22);
+    box-shadow:0 0 0 1px rgba(255,255,255,.65);
+  }
+  .cell.invalid{
+    animation:shake .22s ease-in-out;
+  }
+  @keyframes shake{
+    0%,100%{transform:translateX(0)}
+    25%{transform:translateX(-2px)}
+    75%{transform:translateX(2px)}
+  }
+  #rules{
+    flex:0 0 auto;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:rgba(2,15,24,.72);
+    padding:4px 6px;
+  }
+  #rules summary{
+    cursor:pointer;
+    font-size:12px;
+    font-weight:800;
+    color:#98d7ff;
+  }
+  .rules-body{
+    max-height:24vh;
+    overflow:auto;
+    padding:8px 2px;
+    font-size:11px;
+    color:#cfeeff;
+    white-space:pre-line;
+    overflow-wrap:anywhere;
+  }
+  #overlay{
+    position:fixed;
+    inset:0;
+    z-index:100;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:rgba(0,0,0,.72);
+    backdrop-filter:blur(4px);
+  }
+  #overlay.hidden{display:none}
+  .modal{
+    width:min(92%,340px);
+    padding:18px;
+    border-radius:18px;
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,#0b3d5f,#042233);
+    box-shadow:0 20px 60px rgba(0,0,0,.55);
+  }
+  .modal h2{
+    margin:0 0 8px;
+    font-size:22px;
+    color:#fff;
+  }
+  .modal p{
+    margin:0 0 14px;
+    font-size:13px;
+    color:#cfeeff;
+    white-space:pre-line;
+  }
+  .modal .btn{
+    width:100%;
+    flex:none;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none !important;transition:none !important}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">SAMEGA<span>TIDE</span></div>
+    <div id="brandSub" class="tagline"></div>
+
+    <div class="row">
+      <button id="btnNew" class="btn primary" type="button"></button>
+      <button id="btnSound" class="btn" type="button" aria-pressed="false"></button>
+      <button id="btnClear" class="btn danger" type="button"></button>
+    </div>
+
+    <div class="row selects">
+      <label class="field">
+        <span id="langLabel" class="lbl"></span>
+        <select id="langSelect"></select>
+      </label>
+      <label class="field">
+        <span id="diffLabel" class="lbl"></span>
+        <select id="diffSelect"></select>
+      </label>
+    </div>
+
+    <div class="stats">
+      <div><span id="scoreLabel"></span> <strong id="scoreVal">0</strong></div>
+      <div><span id="bestLabel"></span> <strong id="bestVal">0</strong></div>
+    </div>
+
+    <div id="status" role="status" aria-live="polite"></div>
+  </header>
+
+  <main id="boardArea">
+    <div id="board"></div>
+  </main>
+
+  <section id="rules">
+    <details>
+      <summary id="rulesSummary"></summary>
+      <div id="rulesBody" class="rules-body"></div>
+    </details>
+  </section>
+</div>
+
+<div id="overlay" class="hidden" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2 id="ovTitle"></h2>
+    <p id="ovText"></p>
+    <button id="btnOverlayNew" class="btn primary" type="button"></button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  const ROWS = 12;
+  const COLS = 8;
+  const CLEAR_BONUS = 1000;
+  const SAVE_KEY = 'samega_tide_save_v1';
+  const SAVE_VERSION = 1;
+
+  const LANG_ORDER = ['ja','en','zh','ko','es'];
+  const LANG_NAMES = {
+    ja:'日本語',
+    en:'English',
+    zh:'简体中文',
+    ko:'한국어',
+    es:'Español'
+  };
+
+  const DIFFS = {
+    easy: { colors: 3 },
+    normal: { colors: 4 },
+    hard: { colors: 5 }
+  };
+
+  const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
+  const SCALE = [523.25,587.33,659.25,783.99,880.0,1046.5,1174.66,1318.51,1567.98];
+
+  const I18N = {
+    en:{
+      tagline:'SameGame-style ocean puzzle',
+      new:'New Game',
+      clearSave:'Clear Save',
+      soundOn:'Sound: ON',
+      soundOff:'Sound: OFF',
+      language:'Language',
+      difficulty:'Difficulty',
+      easy:'Easy (3 colors)',
+      normal:'Normal (4 colors)',
+      hard:'Hard (5 colors)',
+      score:'Score',
+      best:'Best',
+      rules:'How to play',
+      rulesBody:`1. Smartphone/tablet: tap a group of 2+ same-colored blocks to select it, then tap again to remove it.
+2. PC: hover over a group and click once to remove it.
+3. Blocks above fall down. Empty columns shift left.
+4. Larger groups score more. Clear all blocks for a bonus.
+This game is saved automatically in this browser.`,
+      statusReady:'Select a group',
+      statusSelected:'{n} blocks selected — tap again to remove',
+      statusInvalid:'A group needs 2 or more blocks',
+      statusRemoved:'Removed {n} blocks: +{points}',
+      statusAllClear:'All blocks cleared! Bonus +{points}',
+      statusNoMoves:'No moves left',
+      overlayTitleClear:'All Clear!',
+      overlayTitleNoMoves:'No Moves Left',
+      overlayText:`Score: {score}
+Best: {best}`,
+      confirmClear:'Erase all saved data?',
+      diffChangeConfirm:'Changing difficulty will start a new game. Continue?',
+      soundOnMsg:'Sound on',
+      soundOffMsg:'Sound off',
+      clearSaveMsg:'Saved data cleared',
+      statusResumed:'Saved game restored'
+    },
+    ja:{
+      tagline:'消して沈めるさめがめパズル',
+      new:'新しいゲーム',
+      clearSave:'保存消去',
+      soundOn:'サウンド: ON',
+      soundOff:'サウンド: OFF',
+      language:'言語',
+      difficulty:'難易度',
+      easy:'やさしい(3色)',
+      normal:'ふつう(4色)',
+      hard:'むずかしい(5色)',
+      score:'スコア',
+      best:'ハイスコア',
+      rules:'遊び方',
+      rulesBody:`1. スマホ/タブレット: 同じ色で2個以上つながったブロックをタップすると選択されます。もう一度タップで消せます。
+2. PC: グループにマウスを合わせ、クリックすると即座に消えます。
+3. 上にあるブロックは落下し、空白列は左へ詰まります。
+4. 大きく消すほど高得点。全部消すとボーナス。
+ゲームはブラウザに自動保存されます。`,
+      statusReady:'グループを選択',
+      statusSelected:'{n}個選択中 — もう一度タップで消す',
+      statusInvalid:'2個以上つながったブロックを選んでください',
+      statusRemoved:'{n}個消した: +{points}',
+      statusAllClear:'全部消した！ボーナス +{points}',
+      statusNoMoves:'手がない',
+      overlayTitleClear:'オールクリア！',
+      overlayTitleNoMoves:'手がない',
+      overlayText:`スコア: {score}
+ハイスコア: {best}`,
+      confirmClear:'保存データをすべて消去しますか？',
+      diffChangeConfirm:'難易度を変更すると新しいゲームが始まります。変更しますか？',
+      soundOnMsg:'サウンド ON',
+      soundOffMsg:'サウンド OFF',
+      clearSaveMsg:'保存データを消去しました',
+      statusResumed:'保存データを復元しました'
+    },
+    zh:{
+      tagline:'消除式方块海洋谜题',
+      new:'新游戏',
+      clearSave:'清除存档',
+      soundOn:'音效：开',
+      soundOff:'音效：关',
+      language:'语言',
+      difficulty:'难度',
+      easy:'简单(3色)',
+      normal:'普通(4色)',
+      hard:'困难(5色)',
+      score:'分数',
+      best:'最高分',
+      rules:'玩法',
+      rulesBody:`1. 手机/平板：点按两个及以上同色相连方块以选中，再点一次消除。
+2. 电脑：悬停一组方块，单击即可消除。
+3. 上方方块下落，空列向左合并。
+4. 消除更多方块得分更高；全部消除有奖励。
+游戏自动保存在本机浏览器。`,
+      statusReady:'选择一组',
+      statusSelected:'已选 {n} 个 — 再点一次消除',
+      statusInvalid:'需要2个以上相连方块',
+      statusRemoved:'消除 {n} 个：+{points}',
+      statusAllClear:'全部消除！奖励 +{points}',
+      statusNoMoves:'没有可消除方块',
+      overlayTitleClear:'全部通关！',
+      overlayTitleNoMoves:'没有可消除方块',
+      overlayText:`分数：{score}
+最高分：{best}`,
+      confirmClear:'确定清除全部存档吗？',
+      diffChangeConfirm:'更改难度会开始新游戏。是否继续？',
+      soundOnMsg:'音效已开启',
+      soundOffMsg:'音效已关闭',
+      clearSaveMsg:'存档已清除',
+      statusResumed:'已恢复存档'
+    },
+    ko:{
+      tagline:'같은 색을 모아 지우는 바다 퍼즐',
+      new:'새 게임',
+      clearSave:'저장 삭제',
+      soundOn:'소리: 켜짐',
+      soundOff:'소리: 꺼짐',
+      language:'언어',
+      difficulty:'난이도',
+      easy:'쉬움(3색)',
+      normal:'보통(4색)',
+      hard:'어려움(5색)',
+      score:'점수',
+      best:'최고 점수',
+      rules:'방법',
+      rulesBody:`1. 스마트폰/태블릿: 같은 색 2개 이상 연결된 블록을 탭하면 선택됩니다. 다시 탭하면 제거됩니다.
+2. PC: 그룹에 마우스를 올리고 클릭하면 바로 제거됩니다.
+3. 위쪽 블록은 떨어지고, 빈 열은 왼쪽으로 이동합니다.
+4. 많이 제거할수록 높은 점수. 전부 지우면 보너스.
+이 브라우저에 자동 저장됩니다.`,
+      statusReady:'그룹을 선택하세요',
+      statusSelected:'{n}개 선택됨 — 다시 탭하여 제거',
+      statusInvalid:'2개 이상 연결된 그룹이어야 합니다',
+      statusRemoved:'{n}개 제거: +{points}',
+      statusAllClear:'전부 제거! 보너스 +{points}',
+      statusNoMoves:'움직일 수 없음',
+      overlayTitleClear:'전체 클리어!',
+      overlayTitleNoMoves:'수 없음',
+      overlayText:`점수: {score}
+최고 점수: {best}`,
+      confirmClear:'저장 데이터를 모두 지우시겠습니까?',
+      diffChangeConfirm:'난이도를 변경하면 새 게임이 시작됩니다. 변경하시겠습니까?',
+      soundOnMsg:'소리 켜짐',
+      soundOffMsg:'소리 꺼짐',
+      clearSaveMsg:'저장 데이터 삭제됨',
+      statusResumed:'저장된 게임 복원됨'
+    },
+    es:{
+      tagline:'Rompecabezas marino de bloques',
+      new:'Nuevo juego',
+      clearSave:'Borrar guardado',
+      soundOn:'Sonido: SÍ',
+      soundOff:'Sonido: NO',
+      language:'Idioma',
+      difficulty:'Dificultad',
+      easy:'Fácil (3 colores)',
+      normal:'Normal (4 colores)',
+      hard:'Difícil (5 colores)',
+      score:'Puntos',
+      best:'Mejor',
+      rules:'Cómo jugar',
+      rulesBody:`1. Móvil/tableta: toca un grupo de 2+ bloques del mismo color para seleccionarlo y vuelve a tocar para eliminarlo.
+2. PC: pasa el ratón sobre un grupo y haz clic una vez para eliminarlo.
+3. Los bloques superiores caen; las columnas vacías se desplazan a la izquierda.
+4. Grupos más grandes dan más puntos. Si borras todo, hay bonus.
+El juego se guarda automáticamente en este navegador.`,
+      statusReady:'Selecciona un grupo',
+      statusSelected:'{n} bloques seleccionados — vuelve a tocar para eliminar',
+      statusInvalid:'Se necesitan 2 o más bloques conectados',
+      statusRemoved:'Eliminados {n}: +{points}',
+      statusAllClear:'¡Todo borrado! Bonus +{points}',
+      statusNoMoves:'No hay movimientos',
+      overlayTitleClear:'¡Todo borrado!',
+      overlayTitleNoMoves:'Sin movimientos',
+      overlayText:`Puntos: {score}
+Mejor: {best}`,
+      confirmClear:'¿Borrar todos los datos guardados?',
+      diffChangeConfirm:'Cambiar la dificultad empezará un nuevo juego. ¿Continuar?',
+      soundOnMsg:'Sonido activado',
+      soundOffMsg:'Sonido desactivado',
+      clearSaveMsg:'Guardado borrado',
+      statusResumed:'Juego restaurado'
+    }
+  };
+
+  function defaultLang(){
+    const lang = (navigator.language || 'en').toLowerCase();
+    for(const code of LANG_ORDER){
+      if(lang.startsWith(code)) return code;
+    }
+    return 'en';
+  }
+
+  let settings = {
+    lang: defaultLang(),
+    sound: true,
+    diff: 'normal'
+  };
+
+  let best = { easy:0, normal:0, hard:0 };
+
+  let currentDiff = settings.diff;
+  let currentColors = DIFFS[currentDiff].colors;
+  let board = [];
+  let score = 0;
+  let gameOver = false;
+
+  let selectedCells = null;
+  let hoverSet = null;
+
+  let audioCtx = null;
+  let statusTimer = null;
+  let invalidTimer = null;
+
+  let statusKey = 'statusReady';
+  let statusVars = {};
+  let layoutQueued = false;
+
+  const $ = id => document.getElementById(id);
+  const els = {
+    app: $('app'),
+    header: document.querySelector('header'),
+    board: $('board'),
+    brandSub: $('brandSub'),
+    btnNew: $('btnNew'),
+    btnSound: $('btnSound'),
+    btnClear: $('btnClear'),
+    langSelect: $('langSelect'),
+    langLabel: $('langLabel'),
+    diffSelect: $('diffSelect'),
+    diffLabel: $('diffLabel'),
+    scoreLabel: $('scoreLabel'),
+    scoreVal: $('scoreVal'),
+    bestLabel: $('bestLabel'),
+    bestVal: $('bestVal'),
+    status: $('status'),
+    rulesSection: $('rules'),
+    rulesSummary: $('rulesSummary'),
+    rulesBody: $('rulesBody'),
+    overlay: $('overlay'),
+    overlayTitle: $('ovTitle'),
+    overlayText: $('ovText'),
+    btnOverlayNew: $('btnOverlayNew')
+  };
+
+  function scheduleLayout(){
+    if(layoutQueued) return;
+    layoutQueued = true;
+    requestAnimationFrame(()=>{
+      layoutQueued = false;
+      layout();
+    });
+  }
+
+  function layout(){
+    const app = els.app;
+    const headerH = els.header ? els.header.offsetHeight : 0;
+    const rulesH = els.rulesSection ? els.rulesSection.offsetHeight : 0;
+
+    // App padding + flex gaps safety margin.
+    const availH = app.clientHeight - headerH - rulesH - 40;
+    const availW = app.clientWidth - 32;
+
+    const w = Math.max(120, Math.min(availW, Math.max(0, availH) * COLS / ROWS));
+    const h = w * ROWS / COLS;
+
+    els.board.style.width = Math.round(w) + 'px';
+    els.board.style.height = Math.round(h) + 'px';
+  }
+
+  function tr(key, vars){
+    vars = vars || {};
+    const dict = I18N[settings.lang] || I18N.en;
+    let s = dict[key] || (I18N.en[key] || key);
+    for(const k in vars){
+      if(Object.prototype.hasOwnProperty.call(vars, k)){
+        s = s.split('{'+k+'}').join(String(vars[k]));
+      }
+    }
+    return s;
+  }
+
+  function setStatus(key, vars){
+    statusKey = key;
+    statusVars = vars || {};
+    els.status.textContent = tr(statusKey, statusVars);
+    scheduleLayout();
+  }
+
+  function statusTemp(key, vars, ms){
+    setStatus(key, vars);
+    clearTimeout(statusTimer);
+    statusTimer = setTimeout(()=>{
+      if(!gameOver) setStatus('statusReady');
+    }, ms || 2200);
+  }
+
+  function buildLangOptions(){
+    els.langSelect.innerHTML = '';
+    for(const code of LANG_ORDER){
+      const opt = document.createElement('option');
+      opt.value = code;
+      opt.textContent = LANG_NAMES[code] || code;
+      els.langSelect.appendChild(opt);
+    }
+  }
+
+  function updateDiffOptions(){
+    els.diffSelect.innerHTML = '';
+    ['easy','normal','hard'].forEach(id=>{
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = tr(id);
+      els.diffSelect.appendChild(opt);
+    });
+    els.diffSelect.value = settings.diff;
+    els.diffSelect.setAttribute('aria-label', tr('difficulty'));
+  }
+
+  function applyLang(){
+    document.documentElement.lang = settings.lang === 'zh' ? 'zh-Hans' : settings.lang;
+    document.title = 'SAMEGA TIDE | ' + tr('tagline');
+
+    els.brandSub.textContent = tr('tagline');
+    els.btnNew.textContent = tr('new');
+    els.btnClear.textContent = tr('clearSave');
+    els.btnOverlayNew.textContent = tr('new');
+    els.btnSound.textContent = tr(settings.sound ? 'soundOn' : 'soundOff');
+    els.btnSound.setAttribute('aria-pressed', String(settings.sound));
+
+    els.langLabel.textContent = tr('language');
+    els.diffLabel.textContent = tr('difficulty');
+    els.scoreLabel.textContent = tr('score');
+    els.bestLabel.textContent = tr('best');
+    els.rulesSummary.textContent = tr('rules');
+    els.rulesBody.textContent = tr('rulesBody');
+
+    updateDiffOptions();
+    els.langSelect.value = settings.lang;
+    setStatus(statusKey, statusVars);
+    scheduleLayout();
+  }
+
+  function save(){
+    try{
+      const state = (!gameOver && Array.isArray(board) && board.length)
+        ? { diff: currentDiff, colors: currentColors, score: score, board: board }
+        : null;
+
+      const data = {
+        v: SAVE_VERSION,
+        settings: settings,
+        best: best,
+        state: state
+      };
+
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    }catch(e){
+      // localStorage may be unavailable. Game still works.
+    }
+  }
+
+  function loadSave(){
+    try{
+      const raw = localStorage.getItem(SAVE_KEY);
+      if(!raw) return null;
+      const data = JSON.parse(raw);
+      if(!data || data.v !== SAVE_VERSION) return null;
+
+      if(data.settings){
+        if(LANG_ORDER.includes(data.settings.lang)) settings.lang = data.settings.lang;
+        if(typeof data.settings.sound === 'boolean') settings.sound = data.settings.sound;
+        if(DIFFS[data.settings.diff]) settings.diff = data.settings.diff;
+      }
+
+      if(data.best && typeof data.best === 'object'){
+        for(const k of Object.keys(best)){
+          const v = data.best[k];
+          if(Number.isFinite(v)) best[k] = Math.max(0, Math.floor(v));
+        }
+      }
+
+      return data;
+    }catch(e){
+      return null;
+    }
+  }
+
+  function validState(s){
+    if(!s || typeof s !== 'object') return false;
+    if(!DIFFS[s.diff]) return false;
+    if(!Number.isInteger(s.colors) || s.colors < 3 || s.colors > 5) return false;
+    if(!Number.isInteger(s.score) || s.score < 0) return false;
+    if(!Array.isArray(s.board) || s.board.length !== ROWS) return false;
+
+    for(let r=0; r<ROWS; r++){
+      const row = s.board[r];
+      if(!Array.isArray(row) || row.length !== COLS) return false;
+      for(let c=0; c<COLS; c++){
+        const v = row[c];
+        if(!Number.isInteger(v) || v < 0 || v > s.colors) return false;
+      }
+    }
+    return true;
+  }
+
+  function inside(r,c){
+    return r >= 0 && r < ROWS && c >= 0 && c < COLS;
+  }
+
+  function key(r,c){
+    return r * COLS + c;
+  }
+
+  function cellEl(r,c){
+    return els.board.querySelector('[data-r="'+r+'"][data-c="'+c+'"]');
+  }
+
+  function renderBoard(){
+    clearTimeout(invalidTimer);
+    invalidTimer = null;
+    hoverSet = null;
+
+    els.board.innerHTML = '';
+    const frag = document.createDocumentFragment();
+
+    for(let r=0; r<ROWS; r++){
+      for(let c=0; c<COLS; c++){
+        const cell = document.createElement('div');
+        const v = board[r][c];
+        cell.className = 'cell ' + (v ? 'c'+v : 'empty');
+        cell.dataset.r = r;
+        cell.dataset.c = c;
+
+        if(selectedCells && selectedCells.has(key(r,c))){
+          cell.classList.add('selected');
+        }
+
+        frag.appendChild(cell);
+      }
+    }
+
+    els.board.appendChild(frag);
+  }
+
+  function getGroup(r,c){
+    if(!inside(r,c) || !board[r][c]) return [];
+    const color = board[r][c];
+    const stack = [[r,c]];
+    const seen = new Set([key(r,c)]);
+    const cells = [];
+
+    while(stack.length){
+      const [cr,cc] = stack.pop();
+      cells.push([cr,cc]);
+
+      for(const [dr,dc] of DIRS){
+        const nr = cr + dr;
+        const nc = cc + dc;
+        if(inside(nr,nc) && board[nr][nc] === color){
+          const k = key(nr,nc);
+          if(!seen.has(k)){
+            seen.add(k);
+            stack.push([nr,nc]);
+          }
+        }
+      }
+    }
+
+    return cells;
+  }
+
+  function hasMoves(){
+    for(let r=0; r<ROWS; r++){
+      for(let c=0; c<COLS; c++){
+        if(board[r][c]){
+          const g = getGroup(r,c);
+          if(g.length >= 2) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function isBoardEmpty(){
+    for(let r=0; r<ROWS; r++){
+      for(let c=0; c<COLS; c++){
+        if(board[r][c]) return false;
+      }
+    }
+    return true;
+  }
+
+  function groupScore(n){
+    if(n < 2) return 0;
+    return (n - 1) * (n - 1) * 10;
+  }
+
+  function makeBoard(colors){
+    const b = [];
+    for(let r=0; r<ROWS; r++){
+      const row = [];
+      for(let c=0; c<COLS; c++){
+        row.push(1 + Math.floor(Math.random() * colors));
+      }
+      b.push(row);
+    }
+    return b;
+  }
+
+  function newGame(diff){
+    if(!DIFFS[diff]) diff = 'normal';
+
+    clearTimeout(statusTimer);
+    clearTimeout(invalidTimer);
+    statusTimer = null;
+    invalidTimer = null;
+
+    settings.diff = diff;
+    currentDiff = diff;
+    currentColors = DIFFS[diff].colors;
+
+    let tries = 0;
+    do{
+      board = makeBoard(currentColors);
+    }while(!hasMoves() && ++tries < 80);
+
+    if(!hasMoves()){
+      board[0][0] = 1;
+      if(ROWS > 1) board[1][0] = 1;
+    }
+
+    score = 0;
+    gameOver = false;
+    selectedCells = null;
+    hoverSet = null;
+
+    els.overlay.classList.add('hidden');
+    els.diffSelect.value = currentDiff;
+
+    renderBoard();
+    updateStatsUI();
+    save();
+    setStatus('statusReady');
+    scheduleLayout();
+  }
+
+  function updateStatsUI(){
+    els.scoreVal.textContent = String(score);
+    els.bestVal.textContent = String(best[currentDiff] || 0);
+  }
+
+  function updateBestIfNeeded(){
+    if(score > (best[currentDiff] || 0)){
+      best[currentDiff] = score;
+      updateStatsUI();
+      save();
+    }
+  }
+
+  function restoreState(state){
+    currentDiff = state.diff;
+    currentColors = state.colors;
+    settings.diff = currentDiff;
+
+    board = state.board.map(row => row.slice());
+    score = state.score;
+
+    gameOver = false;
+    selectedCells = null;
+    hoverSet = null;
+
+    els.overlay.classList.add('hidden');
+    els.diffSelect.value = currentDiff;
+
+    renderBoard();
+    updateStatsUI();
+    updateBestIfNeeded();
+
+    if(isBoardEmpty()){
+      setStatus('statusAllClear', { points: 0 });
+      showOverlay(true);
+      save();
+    }else if(!hasMoves()){
+      setStatus('statusNoMoves');
+      showOverlay(false);
+      save();
+    }else{
+      statusTemp('statusResumed', {}, 2200);
+      save();
+    }
+
+    scheduleLayout();
+  }
+
+  function applyGravity(){
+    // Compact each column downward.
+    for(let c=0; c<COLS; c++){
+      let y = ROWS - 1;
+      for(let r=ROWS-1; r>=0; r--){
+        if(board[r][c] !== 0){
+          if(y !== r){
+            board[y][c] = board[r][c];
+            board[r][c] = 0;
+          }
+          y--;
+        }
+      }
+      for(let r=y; r>=0; r--){
+        board[r][c] = 0;
+      }
+    }
+
+    // Shift non-empty columns to the left.
+    let write = 0;
+    for(let c=0; c<COLS; c++){
+      let empty = true;
+      for(let r=0; r<ROWS; r++){
+        if(board[r][c] !== 0){
+          empty = false;
+          break;
+        }
+      }
+
+      if(!empty){
+        if(write !== c){
+          for(let r=0; r<ROWS; r++){
+            board[r][write] = board[r][c];
+            board[r][c] = 0;
+          }
+        }
+        write++;
+      }
+    }
+
+    for(let c=write; c<COLS; c++){
+      for(let r=0; r<ROWS; r++){
+        board[r][c] = 0;
+      }
+    }
+  }
+
+  function clearSelection(){
+    selectedCells = null;
+  }
+
+  function isSameSet(set, cells){
+    if(!set || set.size !== cells.length) return false;
+    for(const [r,c] of cells){
+      if(!set.has(key(r,c))) return false;
+    }
+    return true;
+  }
+
+  function selectGroup(cells){
+    selectedCells = new Set(cells.map(([r,c])=>key(r,c)));
+    renderBoard();
+    play('select');
+    setStatus('statusSelected', { n: cells.length });
+  }
+
+  function flashInvalid(cells){
+    clearSelection();
+    renderBoard();
+
+    const set = new Set((cells && cells.length ? cells : []).map(([r,c])=>key(r,c)));
+    set.forEach(k=>{
+      const r = Math.floor(k / COLS);
+      const c = k % COLS;
+      const el = cellEl(r,c);
+      if(el) el.classList.add('invalid');
+    });
+
+    clearTimeout(invalidTimer);
+    invalidTimer = setTimeout(()=>{
+      els.board.querySelectorAll('.cell.invalid').forEach(el=>{
+        el.classList.remove('invalid');
+      });
+    }, 350);
+  }
+
+  function removeGroup(cells){
+    const n = cells.length;
+    const pts = groupScore(n);
+
+    clearSelection();
+    hoverSet = null;
+
+    for(const [r,c] of cells){
+      board[r][c] = 0;
+    }
+
+    score += pts;
+    applyGravity();
+    renderBoard();
+    play('remove', n);
+    updateBestIfNeeded();
+    updateStatsUI();
+
+    if(isBoardEmpty()){
+      const bonus = CLEAR_BONUS;
+      score += bonus;
+      setStatus('statusAllClear', { points: bonus });
+      updateBestIfNeeded();
+      play('clear');
+      gameOver = true;
+      showOverlay(true);
+      save();
+    }else if(!hasMoves()){
+      setStatus('statusNoMoves');
+      updateBestIfNeeded();
+      play('gameover');
+      gameOver = true;
+      showOverlay(false);
+      save();
+    }else{
+      statusTemp('statusRemoved', { n: n, points: pts }, 1800);
+      save();
+    }
+
+    scheduleLayout();
+  }
+
+  function handleTap(r, c, immediate){
+    if(gameOver || !inside(r,c)) return;
+
+    if(!board[r][c]){
+      clearSelection();
+      renderBoard();
+      setStatus('statusReady');
+      return;
+    }
+
+    const group = getGroup(r,c);
+
+    if(group.length < 2){
+      clearSelection();
+      flashInvalid(group.length ? group : [[r,c]]);
+      play('invalid');
+      statusTemp('statusInvalid', {}, 1500);
+      return;
+    }
+
+    if(!immediate){
+      if(selectedCells && isSameSet(selectedCells, group)){
+        removeGroup(group);
+      }else{
+        selectGroup(group);
+      }
+    }else{
+      selectedCells = null;
+      removeGroup(group);
+    }
+  }
+
+  function showOverlay(cleared){
+    els.overlayTitle.textContent = tr(cleared ? 'overlayTitleClear' : 'overlayTitleNoMoves');
+    els.overlayText.textContent = tr('overlayText', {
+      score: score,
+      best: best[currentDiff] || 0
+    });
+    els.overlay.classList.remove('hidden');
+  }
+
+  function updateSoundUI(){
+    els.btnSound.textContent = tr(settings.sound ? 'soundOn' : 'soundOff');
+    els.btnSound.setAttribute('aria-pressed', String(settings.sound));
+  }
+
+  function ensureAudio(){
+    if(!settings.sound) return null;
+    if(!audioCtx){
+      const Ctor = window.AudioContext || window.webkitAudioContext;
+      if(!Ctor) return null;
+      try{
+        audioCtx = new Ctor();
+      }catch(e){
+        return null;
+      }
+    }
+    if(audioCtx.state === 'suspended'){
+      audioCtx.resume().catch(()=>{});
+    }
+    return audioCtx;
+  }
+
+  function tone(freq, when, dur, gain, type){
+    const ctx = audioCtx;
+    if(!ctx) return;
+
+    const t = ctx.currentTime + (when || 0);
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    osc.type = type || 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(gain || 0.04, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (dur || 0.12));
+
+    osc.connect(g);
+    g.connect(ctx.destination);
+
+    osc.start(t);
+    osc.stop(t + (dur || 0.12) + 0.03);
+  }
+
+  function play(name, n){
+    if(!settings.sound) return;
+    if(!ensureAudio()) return;
+
+    if(name === 'select'){
+      tone(620, 0, 0.05, 0.03, 'triangle');
+    }else if(name === 'invalid'){
+      tone(120, 0, 0.12, 0.05, 'square');
+      tone(90, 0.08, 0.1, 0.04, 'square');
+    }else if(name === 'remove'){
+      const count = Math.min(n || 0, SCALE.length);
+      const speed = 0.028;
+      for(let i=0; i<count; i++){
+        const f = SCALE[i] * (1 + Math.min(n || 0, 15) * 0.004);
+        tone(f, i * speed, 0.16, 0.035, 'triangle');
+      }
+    }else if(name === 'clear'){
+      [523.25,659.25,783.99,1046.5,1318.51].forEach((f,i)=>{
+        tone(f, i * 0.08, 0.25, 0.045, 'triangle');
+      });
+    }else if(name === 'gameover'){
+      [392,311,262,196].forEach((f,i)=>{
+        tone(f, i * 0.12, 0.25, 0.04, 'sine');
+      });
+    }else if(name === 'start'){
+      [392,523,659].forEach((f,i)=>{
+        tone(f, i * 0.05, 0.12, 0.03, 'triangle');
+      });
+    }
+  }
+
+  function toggleSound(){
+    settings.sound = !settings.sound;
+    updateSoundUI();
+    save();
+
+    if(settings.sound){
+      ensureAudio();
+      play('start');
+      statusTemp('soundOnMsg', {}, 1500);
+    }else{
+      statusTemp('soundOffMsg', {}, 1500);
+    }
+  }
+
+  function clearSave(){
+    if(!confirm(tr('confirmClear'))) return;
+
+    try{
+      localStorage.removeItem(SAVE_KEY);
+    }catch(e){}
+
+    best = { easy:0, normal:0, hard:0 };
+    newGame(currentDiff);
+    statusTemp('clearSaveMsg', {}, 2000);
+  }
+
+  function setHover(set){
+    if(hoverSet === set) return;
+
+    if(hoverSet){
+      hoverSet.forEach(k=>{
+        const r = Math.floor(k / COLS);
+        const c = k % COLS;
+        const el = cellEl(r,c);
+        if(el) el.classList.remove('hover');
+      });
+    }
+
+    hoverSet = set;
+
+    if(hoverSet){
+      hoverSet.forEach(k=>{
+        const r = Math.floor(k / COLS);
+        const c = k % COLS;
+        const el = cellEl(r,c);
+        if(el) el.classList.add('hover');
+      });
+    }
+  }
+
+  function bindEvents(){
+    els.btnNew.addEventListener('click', ()=>{
+      newGame(els.diffSelect.value);
+    });
+
+    els.btnSound.addEventListener('click', toggleSound);
+    els.btnClear.addEventListener('click', clearSave);
+
+    els.langSelect.addEventListener('change', e=>{
+      settings.lang = e.target.value;
+      applyLang();
+      save();
+    });
+
+    els.diffSelect.addEventListener('change', e=>{
+      const next = e.target.value;
+      if(!DIFFS[next]){
+        els.diffSelect.value = currentDiff;
+        return;
+      }
+      if(next === currentDiff) return;
+
+      if(gameOver || confirm(tr('diffChangeConfirm'))){
+        newGame(next);
+      }else{
+        els.diffSelect.value = currentDiff;
+      }
+    });
+
+    const details = els.rulesSection ? els.rulesSection.querySelector('details') : null;
+    if(details){
+      details.addEventListener('toggle', scheduleLayout);
+    }
+
+    window.addEventListener('resize', scheduleLayout);
+    window.addEventListener('orientationchange', ()=>setTimeout(scheduleLayout, 300));
+    window.addEventListener('load', scheduleLayout);
+    if(window.visualViewport){
+      window.visualViewport.addEventListener('resize', scheduleLayout);
+    }
+
+    els.board.addEventListener('pointerdown', e=>{
+      if(e.isPrimary === false) return;
+      if(e.pointerType === 'mouse' && e.button !== 0) return;
+
+      const cell = e.target.closest('.cell');
+      if(!cell) return;
+
+      e.preventDefault();
+
+      const r = parseInt(cell.dataset.r, 10);
+      const c = parseInt(cell.dataset.c, 10);
+      const useConfirmTap = (e.pointerType === 'touch' || e.pointerType === 'pen');
+
+      handleTap(r, c, !useConfirmTap);
+    }, { passive:false });
+
+    els.board.addEventListener('pointermove', e=>{
+      if(e.isPrimary === false) return;
+      if(e.pointerType === 'touch' || e.pointerType === 'pen') return;
+
+      const cell = e.target.closest('.cell');
+      if(!cell){
+        setHover(null);
+        return;
+      }
+
+      const r = parseInt(cell.dataset.r, 10);
+      const c = parseInt(cell.dataset.c, 10);
+      const k = key(r,c);
+
+      if(hoverSet && hoverSet.has(k)) return;
+
+      const g = getGroup(r,c);
+      if(g.length < 2){
+        setHover(null);
+        return;
+      }
+
+      setHover(new Set(g.map(([rr,cc])=>key(rr,cc))));
+    });
+
+    els.board.addEventListener('pointerleave', ()=>setHover(null));
+    els.board.addEventListener('contextmenu', e=>e.preventDefault());
+
+    els.btnOverlayNew.addEventListener('click', ()=>{
+      newGame(currentDiff);
+    });
+  }
+
+  function init(){
+    buildLangOptions();
+    bindEvents();
+
+    const data = loadSave();
+
+    applyLang();
+    updateSoundUI();
+
+    const state = data && validState(data.state) ? data.state : null;
+    if(state){
+      restoreState(state);
+    }else{
+      newGame(settings.diff);
+    }
+
+    layout();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
